@@ -1,0 +1,23 @@
+<h3 class="heading">HEROES LIST</h3>
+<div ng-controller = "HerosCtrl">
+	<a href="#/">Go Back</a>
+	<div class="row">
+		<div class="hero">
+			<div ng-repeat="hero in heros">
+				<div class="col-md-12">
+					<div class="article">
+						<h4>{{hero.name}}</h4>
+							<ul>
+								<li><p><b>{{"Job: " + hero.job}}</b></p></li>
+								<li><p>{{("Type: " +  (hero.type || "unknown")) | limitTo:200}}</p></li>
+								<a class="btn btn-default" href="#/articles/details/{{article._id}}">more detail</a>
+							</ul>
+					</div>
+				</div>
+			</div>
+			<div ng-if="heros == false">
+				No Heros available
+			</div>
+		</div>
+	</div>
+</div>
