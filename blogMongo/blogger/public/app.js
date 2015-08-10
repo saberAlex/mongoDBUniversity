@@ -28,6 +28,18 @@ app.config(['$routeProvider', function($routeProvider){
 		 	templateUrl: 'views/add_hero.view.html',
 		 	controller: 'ArticleCreateCtrl'
 		 }).
+		when('/send/email', {
+			templateUrl: "views/send_email.view.html",
+			controller: "SendEmailCtrl"
+		}).
+		when("/login", {
+			templateUrl: "views/login.view.html",
+			controller: "LoginCtrl"
+		}).
+		when("/users/register", {
+			templateUrl: "views/signup.view.html",
+			controller: "SignupCtrl"
+		}).
 		// when('/articles/edit/:id',{
 		// 	templateUrl: 'views/edit_article.view.html',
 		// 	controller: 'ArticleEditCtrl'

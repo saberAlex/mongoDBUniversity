@@ -1,0 +1,18 @@
+<h1> This is Login page </h1>
+<div ng-controller = "LoginCtrl">
+<h3>{{"hello " + username}}</h3>
+<form ng-submit="sendLogin()">
+  <div class="form-group">
+    <label>username:</label>
+    <input type="text" class="form-control" ng-model="username" name="username" placeholder="Enter username">
+  </div>
+  <div class="form-group">
+    <label>password:</label>
+    <input type="password" class="form-control" ng-model="password" name="password" placeholder="Enter password">
+  </div>
+  </div>
+ 
+  <button type="submit" class="btn btn-default" >Submit</button>
+  <a class="btn btn-danger" href="/#categories">Cancel</a>
+  </form>
+</div>
