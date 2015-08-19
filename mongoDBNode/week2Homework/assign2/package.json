@@ -1,0 +1,16 @@
+{
+  "name": "homework2",
+  "version": "1.0.0",
+  "description": "This is MongoDB homework",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "lucareto",
+  "license": "ISC",
+  "dependencies": {
+    "async": "^1.4.2",
+    "mongo": "^0.1.0",
+    "mongodb": "^2.0.40"
+  }
+}
