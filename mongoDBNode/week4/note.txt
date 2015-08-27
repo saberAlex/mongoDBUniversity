@@ -1,0 +1,171 @@
+//creating the unique index, so they wont be any duplicate key. 
+db.collection.createIndex({"field.subfield": 1}, {unique:true});
+
+//another example: provide the mongoshell index on student_id, class_id ascending for the collection students:
+db.students.createIndex({"student_id":1, "class_id": 1}, {unique: true});
+
+
+//sparse Indexes: index that can be use where the index key is missing from the document 
+//specifiying the sparse option when creating the index. a sparse index can't be use for sorting.. but it use a lot less spaces. 
+//Thus the advantages are: You can gain greater flexibility with creating Unique indexes; The index will be smaller than it would if it were not sparse
+db.collection.createIndex({"field.subfield": 1}, {unique:true, sparse:true});
+
+//Index creation background: foreground & background
+//the foreground is relatively fast and block writers and readers in the database. 
+//Background index is a bit slower: this doesn't block reader and writer.
+//Although the database server will continue to take requests, a background index creation still blocks the mongo shell that you are using to create the index.
+//creatoing an index in the background takes longer than creating it in the foreground. 
+
+/*
+Explain --> how the db executing query
+	db.foo.find().explain()
+	db.foo.explain() --> return explainable object.. and we can also run find(); update(); remove(); aggregate(); help()
+
+*/ 
+db.foo.explain().find();
+
+//filling the collection with data:
+//lets create two compound index: {a:1, b:1}
+//craete explanation object:
+var exp = db.example.explain();
+exp.help();
+
+//This following are valids ways to find out which index uses a particular query:
+db.example.find( { a : 1, b : 2 } ).explain()
+db.example.explain().find( { a : 1, b : 2 } );
+curs = db.example.find( { a : 1, b : 2 } ); curs.explain();
+var exp = db.example.explain(); exp.find( { a : 1, b : 2 } )
+db.example.explain().remove( { a : 1, b : 2 } );
+
+// EXPLAIN: queryPlanner 
+//Execution Stats mode. 
+var exp = db.example.explain("executionStats");
+
+//covered query --> this will make the query a lot faster. 
+//given collection foo with this following index:
+db.foo.createIndex({a: 1, b:1, c:1})
+//This following queries will use the index:
+db.foo.find({a:3});
+db.foo.find({c:1}).sort({a:1, b:1});
+
+//And these queries will not use the indexes: 
+db.foo.find({b:3, c:4});
+db.foo.find({c:1}).sort({a: -1, b: 1});
+/*
+
+To verify the answer key, and see how each index is used, you can check explain("executionStats").
+
+The overriding principle, though, is that you must use a left-subset (or "prefix") of the index. For sorting, it must either match the index orientation, or match its reverse orientation, which you can get when the btree is walked backwards.
+
+*/
+
+suppose you have a document which has this following component:
+'location': [x,y]
+to make the geospatial index you need to have this: 
+db.collection.createIndex({location: '2d'});
+
+and then assume that I have 2D geospatial index defined on the key location in the collection places; Here is the query to find the closest three places to the location 74, 140:
+db.places.find({location: {$near: [74, 140]}}).limit(3)
+
+
+The 2dsphere index. 
+suppose we have location attribute in our document like below:
+location: {
+	//This is a geojson; for more information see the geojson.org
+	type: "Point",
+	coordinates: [ -122, 37] 
+}
+
+to ensure we already have the 2d sphere index:
+db.places.ensureIndex({'location': '2dsphere'});
+
+and suppose we want to find the area near a coordinates in mongo db we can use something like this:
+db.places.find( {
+	location: {
+		$near: {
+			$geometry: {
+				type:"Point",
+				coordinates: [-122, 37] //this is the longitude, latitude!!
+			}, 
+			$maxDistance: 2000
+		}
+	}
+}).pretty()
+
+
+Writing the query that will query a collection named "stores" to return the stores that are within 1000000 meters of the location latitude=39, longitude= -130!
+this is the document example:
+{ "_id" : { "$oid" : "535471aaf28b4d8ee1e1c86f" }, "store_id" : 8, "loc" : { "type" : "Point", "coordinates" : [ -37.47891236119904, 4.488667018711567 ] } }
+
+
+
+Text index:
+assume an index on the "title" field of the movies collection has been created, 
+if we try to find some documents using the index, we can use something like this:
+	db.movies.find({$text: {$search: "Big Lebowski"}});
+
+we can also find how much it maches using this following index:
+$meta: 'text score'
+
+to specify the index we want too use we can use .hint()
+
+db.students.find({student_id:{$gt:500000}, class_id:54}).sort({student_id:1}).hint({class_id:1}).explain("executionstats")
+
+Efficiency of index use; 
+When we design/ using indexes, 
+	> First, we have this goal: Efficient Read/ Write operation
+		> selectivity: minimize record scanned
+		> other operation: how the sort are handled!
+
+In general, based on the preceeding lecture, what is the primary factor that determines how efficiently an index can be use is using:
+	> the selectivity of the index
+Note that: 
+Selectivity is the primary factor that determines how efficiently an index can be used. Ideally, the index enables us to select only those records required to complete the result set, without the need to scan a substantially larger number of index keys (or documents) in order to complete the query. Selectivity determines how many records any subsequent operations must work with. Fewer records means less execution time.
+
+Read about coumpound index!!
+
+Efficiency of index use example:
+In general, which of the following rules of thumbs should you keep in mind when building ompound indexes? Check all that apply.
+
+equality field: field on which queries will perform an equality test
+sort field: field on which queries will specify a sort
+range field: field on which queries perform a range test
+
+Equality field before range field: EQUALITY > range
+Sort fiels before range fields: SORT > range
+Equality fields before sort fields: EQUALITY > SORT
+
+
+Profiler to check which one that slow the DB down. 
+Profiler
+	> system.Profiler
+	0		1 	2
+	level one: want to log slow query
+	2: general debugging level, see on the overall. 
+
+	mongodb --profile 1 --slowm 2
+	we can look in this db.system.profile()
+
+These commands below also has the set counterpart
+db.getProfilingLevel();
+db.getProfilingStatus();
+
+Example: Write the query to look in the system profile collection for all queries that took longer than one second, ordered by timestamp descending:
+db.system.profile.find({millis: {$gt: 1000}}).sort({ts: -1});
+
+
+Mongotop 
+ this give the high overview where mongo spend its time. 
+
+Mongostat commands: this is performance tuning commands. 
+iostat --> Mongostat
+
+Mongostat trivia:
+	> the getmore column concerns the number of requests per time interval to get additional data from the cursor
+	> only the wiredTier storage engine reports the resident memory size of the database
+	> the faults column appears only in the mmapv1 output
+	> by default, mongosat provides information in 100ms increments
+
+
+SHARDING: putting a lot of collection  in many server 
+
