@@ -204,3 +204,4 @@ db.profile.find( {ns: /school2.students/}).sort({millis: -1}).limit(1).pretty() 
 
 
 the millis show the longest running operation. 
+
